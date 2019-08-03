@@ -1,7 +1,7 @@
-**FreeCodeCamp**- Information Security and Quality Assurance
+## FreeCodeCamp - Information Security and Quality Assurance
 ------
 
-Project Personal Library
+### Project Personal Library
 
 - Nothing from my website will be cached in my client as a security measure.
 - I will see that the site is powered by 'PHP 4.2.0' even though it isn't as a security measure.
