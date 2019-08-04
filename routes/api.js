@@ -18,7 +18,7 @@ module.exports = function (app) {
     // console.log('Connected to database!');
     
     app.route('/api/books')
-      .get(function (req, res){
+      .get(function (req, res, next){
         //response will be array of book objects
         //json res format: [{"_id": bookid, "title": book_title, "commentcount": num_of_comments },...]
         // res.json({ "title": "test_message - GET at '/api/books'" });
@@ -27,26 +27,30 @@ module.exports = function (app) {
           if(connectErr) res.json({ "error": "Error connecting to database!", "error": connectErr });
           const db = client.db('test-db');
           
-          db.collection('testCollection')
-            .find({})
-            .toArray((filesErr, files) => {
-              if(filesErr) throw filesErr;
-              else {
-                const booksWithCommentcount = files.map(file => {
-                  return {
-                    title: file.title,
-                    _id: file._id,
-                    commentcount: file.comments.length || 0
-                  };
-                });
-                res.json(booksWithCommentcount);
-              }
-            });
+          try {
+            db.collection('testCollection')
+              .find({})
+              .toArray((filesErr, files) => {
+                if(filesErr) throw filesErr;
+                else {
+                  const booksWithCommentcount = files.map(file => {
+                    return {
+                      title: file.title,
+                      _id: file._id,
+                      commentcount: file.comments.length || 0
+                    };
+                  });
+                  res.json(booksWithCommentcount);
+                }
+              });
+          } catch(err) {
+            next(err);
+          }
           
         });
       })
       
-      .post(function (req, res){
+      .post(function (req, res, next){
         var title = req.body.title;
         //response will contain new book object including atleast _id and title
       
@@ -54,7 +58,7 @@ module.exports = function (app) {
           // res.json({ title: title });
           try {
             MongoClient.connect(MONGODB_CONNECTION_STRING, { useNewUrlParser: true }, (connectErr, client) => {
-              if(connectErr) res.json({ "error": "Error connecting to database!", "error": connectErr });
+              if(connectErr) next(err);
               
               const db = client.db('test-db');
               const newBookJson = { 
@@ -89,11 +93,11 @@ module.exports = function (app) {
         }
       })
       
-      .delete(function(req, res){
+      .delete(function(req, res, next){
         //if successful response will be 'complete delete successful'
         console.log('deleting all documents');
         MongoClient.connect(MONGODB_CONNECTION_STRING, { useNewUrlParser: true }, (connectErr, client) => {
-          if(connectErr) res.json({ "error": "Error connecting to database!", "error": connectErr });
+          if(connectErr) next(connectErr);
           const db = client.db('test-db');
           try {
             db.collection('testCollection2').deleteMany({}, (err) => {
@@ -111,7 +115,7 @@ module.exports = function (app) {
 
     
     app.route('/api/books/:id')
-      .get(function (req, res){
+      .get(function (req, res, next){
       
         var bookid = req.params.id;
         //json res format: {"_id": bookid, "title": book_title, "comments": [comment,comment,...]}
@@ -120,10 +124,10 @@ module.exports = function (app) {
           // console.log('bookid found, check database');
           
           MongoClient.connect(MONGODB_CONNECTION_STRING, { useNewUrlParser: true }, (connectErr, client) => {
-            if(connectErr) res.json({ "error": "Error connecting to database!", "error": connectErr });
+            if(connectErr) next(connectErr);
             const db = client.db('test-db');
             db.collection('testCollection').findOne({ _id: bookid }, (findErr, file) => {
-              if(findErr) throw findErr;
+              if(findErr) next(findErr);
               // console.log(file);
               if(file) {
                 // console.log(`found file w/ ID: '${bookid}'`, file);
